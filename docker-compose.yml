@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  booktar:
+    image: ghcr.io/therealshadoh/booktar-container:latest
+    container_name: booktar
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    volumes:
+      - booktar_data:/app/data
+      - booktar_cache:/app/cache
+    environment:
+      # Database configuration
+      - DATABASE_URL=sqlite:///app/data/booktar.db
+      
+      # Cache configuration
+      - CACHE_FILE=/app/cache/books.json
+      
+      # API configuration
+      - API_RATE_LIMIT_DELAY=1
+      - GOOGLE_BOOKS_API_KEY=${GOOGLE_BOOKS_API_KEY:-}
+      
+      # Application settings
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "org.label-schema.group=booktar"
+
+volumes:
+  booktar_data:
+    driver: local
+  booktar_cache:
+    driver: local
+
+networks:
+  default:
+    name: booktar_network
