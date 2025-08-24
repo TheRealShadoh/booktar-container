@@ -8,14 +8,19 @@ ARG REPO_URL=https://github.com/TheRealShadoh/booktarr.git
 ARG BRANCH=main
 
 WORKDIR /app
-RUN git clone --branch ${BRANCH} --depth 1 ${REPO_URL} .
+RUN git clone --branch ${BRANCH} --depth 1 ${REPO_URL} . && \
+    ls -la && \
+    echo "Contents of backend directory:" && \
+    ls -la backend/ || echo "Backend directory not found" && \
+    echo "Contents of frontend directory:" && \
+    ls -la frontend/ || echo "Frontend directory not found"
 
 # Stage 2: Build frontend
 FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Copy frontend package files
+# Check if frontend directory exists and copy files
 COPY --from=source frontend/package*.json ./
 RUN npm ci --only=production
 
@@ -36,7 +41,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy backend requirements and install
-COPY --from=source backend/requirements.txt ./
+COPY --from=source backend/requirements.txt ./requirements.txt
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Stage 4: Final runtime image
