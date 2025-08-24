@@ -8,24 +8,19 @@ ARG REPO_URL=https://github.com/TheRealShadoh/booktarr.git
 ARG BRANCH=main
 
 WORKDIR /app
-RUN git clone --branch ${BRANCH} --depth 1 ${REPO_URL} . && \
-    ls -la && \
-    echo "Contents of backend directory:" && \
-    ls -la backend/ || echo "Backend directory not found" && \
-    echo "Contents of frontend directory:" && \
-    ls -la frontend/ || echo "Frontend directory not found"
+RUN git clone --branch ${BRANCH} --depth 1 ${REPO_URL} .
 
 # Stage 2: Build frontend
 FROM node:18-alpine AS frontend-builder
 
+# Copy the entire source tree first
+COPY --from=source /app /app
 WORKDIR /app/frontend
 
-# Check if frontend directory exists and copy files
-COPY --from=source frontend/package*.json ./
-RUN npm ci --only=production
+# Install dependencies
+RUN npm install --omit=dev
 
-# Copy frontend source and build
-COPY --from=source frontend/ ./
+# Build the frontend
 RUN npm run build
 
 # Stage 3: Build backend dependencies
@@ -38,11 +33,12 @@ RUN apk add --no-cache \
     libffi-dev \
     openssl-dev
 
+# Copy the entire source tree
+COPY --from=source /app /app
 WORKDIR /app
 
-# Copy backend requirements and install
-COPY --from=source backend/requirements.txt ./requirements.txt
-RUN pip install --user --no-cache-dir -r requirements.txt
+# Install Python dependencies
+RUN pip install --user --no-cache-dir -r backend/requirements.txt
 
 # Stage 4: Final runtime image
 FROM python:3.11-alpine AS runtime
@@ -63,7 +59,7 @@ WORKDIR /app
 COPY --from=backend-builder /root/.local /home/booktar/.local
 
 # Copy application source
-COPY --from=source backend/ ./backend/
+COPY --from=source /app/backend ./backend/
 COPY --from=frontend-builder /app/frontend/build ./frontend/build/
 
 # Create necessary directories and set permissions
