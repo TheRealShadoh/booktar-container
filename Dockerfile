@@ -1,7 +1,16 @@
 # Multi-stage Dockerfile for booktar application
 # Supports multi-architecture builds (amd64, arm64, armv7)
 
-# Stage 1: Build frontend
+# Stage 1: Source fetcher
+FROM alpine/git AS source
+
+ARG REPO_URL=https://github.com/TheRealShadoh/booktarr.git
+ARG BRANCH=main
+
+WORKDIR /app
+RUN git clone --branch ${BRANCH} --depth 1 ${REPO_URL} .
+
+# Stage 2: Build frontend
 FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app/frontend
@@ -14,7 +23,7 @@ RUN npm ci --only=production
 COPY --from=source frontend/ ./
 RUN npm run build
 
-# Stage 2: Build backend dependencies
+# Stage 3: Build backend dependencies
 FROM python:3.11-alpine AS backend-builder
 
 # Install build dependencies
@@ -29,15 +38,6 @@ WORKDIR /app
 # Copy backend requirements and install
 COPY --from=source backend/requirements.txt ./
 RUN pip install --user --no-cache-dir -r requirements.txt
-
-# Stage 3: Source fetcher
-FROM alpine/git AS source
-
-ARG REPO_URL=https://github.com/TheRealShadoh/booktarr.git
-ARG BRANCH=main
-
-WORKDIR /app
-RUN git clone --branch ${BRANCH} --depth 1 ${REPO_URL} .
 
 # Stage 4: Final runtime image
 FROM python:3.11-alpine AS runtime
