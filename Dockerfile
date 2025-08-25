@@ -84,10 +84,10 @@ COPY --from=frontend-builder /app/frontend/build ./frontend/build/
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Create necessary directories and set permissions
-RUN mkdir -p /app/data /app/cache /app/backend && \
+# Create necessary directories and fix ALL permissions as final step
+RUN mkdir -p /app/data /app/cache && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh && \
     chown -R booktar:booktar /app && \
     chmod 755 /app/data /app/cache
 
