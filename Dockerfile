@@ -106,10 +106,10 @@ ENV PYTHONPATH=/app/backend \
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8002/api/health || exit 1
 
 # Expose ports
-EXPOSE 8000 3000
+EXPOSE 8002 3000
 
 # Use tini as init system with our entrypoint script
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]

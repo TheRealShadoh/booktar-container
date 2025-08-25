@@ -178,7 +178,7 @@ jobs:
           
           # Start container (without volume mounts to avoid permission issues)
           docker run -d --name test-booktar \
-            -p 8000:8000 \
+            -p 8002:8002 \
             -p 3000:3000 \
             ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ env.IMAGE_NAME }}:latest
           
@@ -193,7 +193,7 @@ jobs:
           fi
           
           # Test basic connectivity
-          if curl -f --connect-timeout 10 --max-time 30 http://localhost:8000/ || curl -f --connect-timeout 10 --max-time 30 http://localhost:8000/health; then
+          if curl -f --connect-timeout 10 --max-time 30 http://localhost:8002/api/health || curl -f --connect-timeout 10 --max-time 30 http://localhost:8002/; then
             echo "Container is responding"
           else
             echo "Container health check failed"
