@@ -176,11 +176,14 @@ jobs:
           # Pull and test the newly built image
           docker pull ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ env.IMAGE_NAME }}:latest
           
-          # Start container
+          # Start container with volume mounts for persistent data
           docker run -d --name test-booktar \
             -p 8000:8000 \
-            -e DATABASE_URL=sqlite:///app/data/test.db \
-            -e CACHE_FILE=/app/cache/test.json \
+            -p 3000:3000 \
+            -v /tmp/booktar-data:/app/data \
+            -v /tmp/booktar-cache:/app/cache \
+            -e DATABASE_URL=sqlite:///app/data/booktar.db \
+            -e CACHE_FILE=/app/cache/books.json \
             ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ env.IMAGE_NAME }}:latest
           
           # Wait for container to be ready

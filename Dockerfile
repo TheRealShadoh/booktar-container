@@ -83,8 +83,9 @@ COPY --from=source /app/backend ./backend/
 COPY --from=frontend-builder /app/frontend/build ./frontend/build/
 
 # Create necessary directories and set permissions
-RUN mkdir -p /app/data /app/cache && \
-    chown -R booktar:booktar /app
+RUN mkdir -p /app/data /app/cache /app/backend && \
+    chown -R booktar:booktar /app && \
+    chmod 755 /app/data /app/cache
 
 # Switch to non-root user
 USER booktar
@@ -109,8 +110,9 @@ EXPOSE 8000 3000
 # Use tini as init system
 ENTRYPOINT ["/sbin/tini", "--"]
 
-# Start the application
-CMD ["python", "backend/main.py"]
+# Start the application with proper working directory
+WORKDIR /app/backend
+CMD ["python", "main.py"]
 
 # Metadata
 LABEL org.opencontainers.image.title="Booktar Container"
