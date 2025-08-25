@@ -57,6 +57,8 @@ WORKDIR /app
 # Verify requirements.txt exists and install Python dependencies
 RUN ls -la backend/requirements.txt || (echo "ERROR: requirements.txt not found in backend directory" && exit 1)
 RUN pip install --user --no-cache-dir -r backend/requirements.txt
+# Install additional required dependencies not in upstream requirements.txt
+RUN pip install --user --no-cache-dir python-multipart
 
 # Stage 4: Final runtime image
 FROM python:3.11-alpine AS runtime
