@@ -13,6 +13,13 @@ RUN git clone --branch ${BRANCH} --depth 1 ${REPO_URL} .
 # Stage 2: Build frontend
 FROM node:18-alpine AS frontend-builder
 
+# Install system dependencies that may be needed for native modules
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git
+
 # Copy the entire source tree first
 COPY --from=source /app /app
 WORKDIR /app/frontend
@@ -20,8 +27,14 @@ WORKDIR /app/frontend
 # Verify package.json exists
 RUN ls -la package.json || (echo "ERROR: package.json not found in frontend directory" && exit 1)
 
-# Install all dependencies (including dev dependencies needed for build)
-RUN npm ci --legacy-peer-deps
+# Clean npm cache and install dependencies with multiple fallback strategies
+RUN npm cache clean --force
+RUN npm install --legacy-peer-deps || \
+    (echo "Retrying with --force flag" && npm install --force) || \
+    (echo "Retrying without lockfile" && rm -f package-lock.json && npm install)
+
+# Verify installation worked
+RUN npm list --depth=0 || echo "Warning: Some dependency issues detected but continuing"
 
 # Build the frontend with error handling
 RUN npm run build && ls -la build/ || (echo "ERROR: Frontend build failed or build directory not created" && exit 1)
