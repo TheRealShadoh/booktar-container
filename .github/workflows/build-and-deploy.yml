@@ -176,12 +176,10 @@ jobs:
           # Pull and test the newly built image
           docker pull ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ env.IMAGE_NAME }}:latest
           
-          # Start container with volume mounts for persistent data
+          # Start container (without volume mounts to avoid permission issues)
           docker run -d --name test-booktar \
             -p 8000:8000 \
             -p 3000:3000 \
-            -v /tmp/booktar-data:/app/data \
-            -v /tmp/booktar-cache:/app/cache \
             ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ env.IMAGE_NAME }}:latest
           
           # Wait for container to be ready

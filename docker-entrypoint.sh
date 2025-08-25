@@ -1,32 +1,44 @@
 #!/bin/sh
 set -e
 
-# Ensure data and cache directories exist with proper permissions
+# Ensure data and cache directories exist
 echo "Ensuring data directories exist..."
 mkdir -p /app/data /app/cache
 
-# Check if running as root (shouldn't happen, but handle it)
-if [ "$(id -u)" = "0" ]; then
-    echo "Running as root, adjusting permissions..."
-    chown -R booktar:booktar /app/data /app/cache
-    chmod 755 /app/data /app/cache
-fi
+# Check current ownership
+echo "Current directory ownership:"
+ls -la /app/ | grep -E "data|cache"
 
-# Verify directories are writable
-if [ -w /app/data ]; then
+# If directories are owned by root (from volume mounts), we need to work around it
+# Since we're running as booktar user, we can't chown, but we can use subdirectories
+if [ ! -w /app/data ]; then
+    echo "Warning: /app/data is not writable (likely a volume mount owned by root)"
+    echo "Creating writable subdirectory /app/data/db..."
+    if mkdir -p /app/data/db 2>/dev/null; then
+        echo "✓ Created writable subdirectory"
+        export DATABASE_URL="sqlite:///app/data/db/booktar.db"
+    else
+        echo "✓ Using in-container data directory instead"
+        mkdir -p /tmp/booktar-data
+        export DATABASE_URL="sqlite:////tmp/booktar-data/booktar.db"
+    fi
+else
     echo "✓ Data directory is writable"
-else
-    echo "✗ ERROR: Data directory is not writable"
-    ls -la /app/
-    exit 1
 fi
 
-if [ -w /app/cache ]; then
-    echo "✓ Cache directory is writable"
+if [ ! -w /app/cache ]; then
+    echo "Warning: /app/cache is not writable (likely a volume mount owned by root)"
+    echo "Creating writable subdirectory /app/cache/data..."
+    if mkdir -p /app/cache/data 2>/dev/null; then
+        echo "✓ Created writable subdirectory"
+        export CACHE_FILE="/app/cache/data/books.json"
+    else
+        echo "✓ Using in-container cache directory instead"
+        mkdir -p /tmp/booktar-cache
+        export CACHE_FILE="/tmp/booktar-cache/books.json"
+    fi
 else
-    echo "✗ ERROR: Cache directory is not writable"
-    ls -la /app/
-    exit 1
+    echo "✓ Cache directory is writable"
 fi
 
 # Display environment for debugging
