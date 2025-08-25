@@ -11,7 +11,7 @@ WORKDIR /app
 RUN git clone --branch ${BRANCH} --depth 1 ${REPO_URL} .
 
 # Stage 2: Build frontend
-FROM node:18-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 
 # Install system dependencies that may be needed for native modules
 RUN apk add --no-cache \
