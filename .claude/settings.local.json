@@ -5,7 +5,9 @@
       "Bash",
       "Edit",
       "Write",
-      "Search"
+      "Search",
+      "WebFetch(domain:api.github.com)",
+      "Bash(docker build:*)"
     ],
     "deny": [],
     "ask": []
