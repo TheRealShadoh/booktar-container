@@ -87,6 +87,7 @@ jobs:
     needs: check-upstream
     if: needs.check-upstream.outputs.should_build == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
       packages: write
@@ -126,7 +127,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -135,6 +136,8 @@ jobs:
             BRANCH=main
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          outputs: type=registry
+        timeout-minutes: 45
 
       - name: Update last built SHA
         if: github.event.name == 'schedule' || github.event.inputs.force_build == 'true'
@@ -156,7 +159,7 @@ jobs:
           echo "- **Upstream Repository**: ${{ env.UPSTREAM_REPO }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Upstream SHA**: ${{ needs.check-upstream.outputs.upstream_sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Image**: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Platforms**: linux/amd64, linux/arm64, linux/arm/v7" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms**: linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
           echo "- **Trigger**: ${{ github.event.name }}" >> $GITHUB_STEP_SUMMARY
 
   test-deployment:

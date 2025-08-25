@@ -17,11 +17,14 @@ FROM node:18-alpine AS frontend-builder
 COPY --from=source /app /app
 WORKDIR /app/frontend
 
-# Install dependencies
-RUN npm install --omit=dev
+# Verify package.json exists
+RUN ls -la package.json || (echo "ERROR: package.json not found in frontend directory" && exit 1)
 
-# Build the frontend
-RUN npm run build
+# Install all dependencies (including dev dependencies needed for build)
+RUN npm ci --legacy-peer-deps
+
+# Build the frontend with error handling
+RUN npm run build && ls -la build/ || (echo "ERROR: Frontend build failed or build directory not created" && exit 1)
 
 # Stage 3: Build backend dependencies
 FROM python:3.11-alpine AS backend-builder
@@ -31,13 +34,15 @@ RUN apk add --no-cache \
     gcc \
     musl-dev \
     libffi-dev \
-    openssl-dev
+    openssl-dev \
+    linux-headers
 
 # Copy the entire source tree
 COPY --from=source /app /app
 WORKDIR /app
 
-# Install Python dependencies
+# Verify requirements.txt exists and install Python dependencies
+RUN ls -la backend/requirements.txt || (echo "ERROR: requirements.txt not found in backend directory" && exit 1)
 RUN pip install --user --no-cache-dir -r backend/requirements.txt
 
 # Stage 4: Final runtime image
