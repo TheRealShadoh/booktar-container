@@ -182,8 +182,6 @@ jobs:
             -p 3000:3000 \
             -v /tmp/booktar-data:/app/data \
             -v /tmp/booktar-cache:/app/cache \
-            -e DATABASE_URL=sqlite:///app/data/booktar.db \
-            -e CACHE_FILE=/app/cache/books.json \
             ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ env.IMAGE_NAME }}:latest
           
           # Wait for container to be ready

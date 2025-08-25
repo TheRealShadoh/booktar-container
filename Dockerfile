@@ -82,6 +82,10 @@ COPY --from=backend-builder /root/.local /home/booktar/.local
 COPY --from=source /app/backend ./backend/
 COPY --from=frontend-builder /app/frontend/build ./frontend/build/
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Create necessary directories and set permissions
 RUN mkdir -p /app/data /app/cache /app/backend && \
     chown -R booktar:booktar /app && \
@@ -93,11 +97,11 @@ USER booktar
 # Add local bin to PATH
 ENV PATH=/home/booktar/.local/bin:$PATH
 
-# Set environment variables
+# Set environment variables  
 ENV PYTHONPATH=/app/backend \
     PYTHONUNBUFFERED=1 \
-    DATABASE_URL=sqlite:///app/data/booktar.db \
-    CACHE_FILE=/app/cache/books.json \
+    DATABASE_URL=sqlite:///../data/booktar.db \
+    CACHE_FILE=../cache/books.json \
     API_RATE_LIMIT_DELAY=1
 
 # Health check
@@ -107,8 +111,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # Expose ports
 EXPOSE 8000 3000
 
-# Use tini as init system
-ENTRYPOINT ["/sbin/tini", "--"]
+# Use tini as init system with our entrypoint script
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 
 # Start the application with proper working directory
 WORKDIR /app/backend
